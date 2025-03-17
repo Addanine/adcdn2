@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: adcdn-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: adcdn
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Use a different host port to avoid conflicts
+
+  app:
+    build: .
+    container_name: adcdn-app
+    restart: unless-stopped
+    ports:
+      - "3002:3000"  # Use port 3002 since 3001 is already in use
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@adcdn-db:5432/adcdn
+      - JWT_SECRET=${JWT_SECRET}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=https://cdn.adenine.xyz
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - uploads:/app/uploads
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+networks:
+  default:
+
+volumes:
+  postgres_data:
+  uploads:
